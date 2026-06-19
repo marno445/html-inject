@@ -321,22 +321,7 @@ javascript:(function() {
         }, 800);
     };
 
-    // Restore Button (Hapus Frame, Munculkan Web Asli)
-    shadow.getElementById("btn-restore").onclick = () => {
-        if (!isInjected) return showToast("Nothing to restore.", "info");
-        
-        const iframe = document.getElementById("glassStudioFrame");
-        if(iframe) iframe.remove();
-
-        Array.from(document.body.children).forEach(child => {
-            if(child.hasAttribute('data-display-origin')) {
-                child.style.display = child.getAttribute('data-display-origin');
-            }
-        });
-
-        isInjected = false;
-        showToast("Page Restored", "success");
-    };
+    // Restore Button (Hapus Frame, Munculkan Web Asli
 
     showToast("Studio Ready", "info");
 })();
