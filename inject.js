@@ -1,4 +1,4 @@
-```html
+
 javascript:(function() {
     // Mencegah duplikasi UI
     if (document.getElementById("iosGlassStudio")) return;
@@ -330,5 +330,3 @@ javascript:(function() {
     showToast("Glass Studio Ready ✨");
 })();
 
-
-```
