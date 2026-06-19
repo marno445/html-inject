@@ -1,234 +1,240 @@
-```html
 javascript:(function() {
-    // Mencegah duplikasi UI
+    // Mencegah duplikasi jika sudah ditekan sebelumnya
     if (document.getElementById("iosGlassHost")) return;
 
     const DRAFT = "IOS_GLASS_DRAFT_HTML";
 
-    // Membuat Shadow DOM agar kebal dari CSS website asli
+    // Membuat Shadow DOM Host agar CSS tidak tercampur dengan CSS website
     const host = document.createElement("div");
     host.id = "iosGlassHost";
+    // Wrapper dibuat transparan dan tidak mengganggu klik website di luarnya
     host.style.cssText = "position: fixed; inset: 0; z-index: 2147483647; pointer-events: none;";
     document.body.appendChild(host);
 
+    // Mengaktifkan Shadow Root
     const shadow = host.attachShadow({ mode: "open" });
 
-    // CSS Tema Terang (White Glass) & Anti-Overflow Layout
+    // CSS Tema Terang, Professional, & Menonjol
     const css = `
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
-    * {
-        box-sizing: border-box; /* Kunci agar elemen tidak keluar jalur */
-    }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 
     :host {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
     #iosGlassCard {
-        position: fixed; /* Fixed agar selalu di area layar */
-        top: 5vh;
+        position: absolute;
+        top: 8vh;
         left: 5vw;
         width: 90vw;
-        height: 85vh; /* Batas maksimal tinggi layar */
+        height: 75vh;
         max-width: 600px;
         border-radius: 24px;
-        background: rgba(255, 255, 255, 0.85); /* Putih transparan */
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.8);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(25px);
+        -webkit-backdrop-filter: blur(25px);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), inset 0 0 0 1px rgba(255, 255, 255, 0.6);
         display: flex;
-        flex-direction: column; /* Susunan vertikal */
+        flex-direction: column;
         color: #1C1C1E;
-        pointer-events: auto;
-        overflow: hidden; /* Mencegah tombol keluar dari Card */
+        pointer-events: auto; /* Agar card bisa diklik */
+        overflow: hidden;
         opacity: 0;
         transform: scale(0.95);
-        animation: popupOpen 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        animation: popupSpring 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
-    @keyframes popupOpen { to { opacity: 1; transform: scale(1); } }
-    @keyframes popupClose { to { opacity: 0; transform: scale(0.95); } }
+    @keyframes popupSpring { 
+        to { opacity: 1; transform: scale(1) translate(0, 0); } 
+    }
+    @keyframes popupHide { 
+        to { opacity: 0; transform: scale(0.95); } 
+    }
 
     #iosTopBar {
-        padding: 16px;
+        padding: 16px 20px;
         display: flex;
+        justify-content: space-between;
         align-items: center;
-        gap: 12px;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-        background: rgba(255, 255, 255, 0.4);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        background: rgba(255, 255, 255, 0.5);
         cursor: grab;
-        touch-action: none;
-        flex-shrink: 0; /* Header tidak boleh menyusut */
+        touch-action: none; /* Cegah scroll saat di-drag di Android */
     }
     #iosTopBar:active { cursor: grabbing; }
 
-    .icon-app {
-        width: 40px; height: 40px;
-        background: #FFFFFF;
-        border-radius: 10px;
+    .ios-header-info { display: flex; align-items: center; gap: 14px; pointer-events: none; }
+    
+    .ios-icon-box {
+        width: 42px; height: 42px;
+        background: #F2F2F7;
+        border-radius: 12px;
         display: flex; justify-content: center; align-items: center;
         color: #007AFF;
-        box-shadow: 0 4px 10px rgba(0, 122, 255, 0.15);
-        border: 1px solid rgba(0, 122, 255, 0.1);
+        border: 1px solid rgba(0, 0, 0, 0.05);
     }
-    .icon-app svg { width: 22px; height: 22px; }
+    .ios-icon-box svg { width: 22px; height: 22px; }
 
-    .title-box { display: flex; flex-direction: column; pointer-events: none; }
-    .title-box h3 { margin: 0; font-size: 16px; font-weight: 700; color: #1C1C1E; }
-    .title-box p { margin: 0; font-size: 12px; color: #8E8E93; font-weight: 500; }
+    .ios-titles h3 { margin: 0; font-size: 16px; font-weight: 600; color: #000; letter-spacing: -0.3px; }
+    .ios-titles p { margin: 2px 0 0; font-size: 12px; color: #6E6E73; }
 
     #iosContent {
-        padding: 16px;
-        display: flex;
-        flex-direction: column;
-        flex: 1;
-        min-height: 0; /* Kunci agar textarea bisa scroll dan tidak menabrak batas bawah */
+        padding: 16px 20px;
+        display: flex; flex-direction: column; gap: 16px; flex: 1;
     }
 
     #iosEditor {
         flex: 1;
-        width: 100%;
-        background: #F2F2F7;
-        border: 1.5px solid rgba(0, 0, 0, 0.05);
+        background: rgba(0, 0, 0, 0.03);
+        border: 1px solid rgba(0, 0, 0, 0.08);
         border-radius: 16px;
         padding: 16px;
         color: #1C1C1E;
-        font-family: ui-monospace, monospace;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         font-size: 13px;
         line-height: 1.5;
         resize: none;
         outline: none;
         transition: all 0.2s;
-        margin-bottom: 16px; /* Jarak antara editor dan tombol */
+        -webkit-overflow-scrolling: touch;
     }
     #iosEditor:focus { 
+        border-color: #007AFF; 
         background: #FFFFFF;
-        border-color: #007AFF;
-        box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+        box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.15);
     }
+    #iosEditor::placeholder { color: #A1A1A6; }
 
-    .ios-actions {
-        display: flex;
-        gap: 10px;
-        flex-shrink: 0; /* Tombol tidak boleh menyusut tertekan textarea */
-    }
+    .ios-actions { display: flex; gap: 10px; }
 
-    /* Gaya Tombol: Putih tapi Mencolok */
     .ios-btn {
-        height: 50px;
-        background: #FFFFFF;
-        border-radius: 14px;
+        height: 48px;
+        border: none; border-radius: 14px;
         font-size: 14px; font-weight: 600;
         cursor: pointer;
-        display: flex; justify-content: center; align-items: center; gap: 6px;
-        transition: all 0.1s;
+        display: flex; justify-content: center; align-items: center; gap: 8px;
+        transition: transform 0.1s, filter 0.2s;
     }
-    .ios-btn:active { transform: scale(0.95); }
+    .ios-btn:active { transform: scale(0.94); }
     .ios-btn svg { width: 18px; height: 18px; }
 
-    /* Tombol Execute (Biru Mencolok) */
-    .btn-exec {
-        flex: 2;
-        color: #007AFF;
-        border: 1.5px solid #007AFF;
-        box-shadow: 0 6px 16px rgba(0, 122, 255, 0.2);
-    }
-    /* Tombol Restore (Merah Mencolok) */
-    .btn-restore {
-        flex: 1.5;
-        color: #FF3B30;
-        border: 1.5px solid #FF3B30;
-        box-shadow: 0 6px 16px rgba(255, 59, 48, 0.2);
-    }
-    /* Tombol Close (Abu-abu Lembut) */
-    .btn-close {
-        flex: 1;
-        color: #8E8E93;
-        border: 1.5px solid #D1D1D6;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-    }
+    /* Desain Tombol Menonjol */
+    .btn-exec { flex: 2; background: #007AFF; color: white; box-shadow: 0 6px 16px rgba(0, 122, 255, 0.3); }
+    .btn-restore { flex: 1; background: #FF3B30; color: white; box-shadow: 0 6px 16px rgba(255, 59, 48, 0.3); }
+    .btn-close { flex: 1; background: #E5E5EA; color: #1C1C1E; }
 
-    /* Toast Notifikasi */
-    .toast {
-        position: fixed; bottom: 30px; left: 50%; transform: translate(-50%, 20px);
-        background: rgba(0, 0, 0, 0.8); color: white;
-        padding: 12px 20px; border-radius: 20px; font-size: 13px; font-weight: 500;
-        opacity: 0; transition: all 0.3s; pointer-events: none; z-index: 9999;
-        display: flex; align-items: center; gap: 8px; backdrop-filter: blur(10px);
+    /* Toast Notification Professional */
+    .ios-toast {
+        position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%) translateY(20px);
+        background: rgba(30, 30, 30, 0.9); backdrop-filter: blur(15px);
+        color: white; padding: 12px 24px; border-radius: 30px;
+        font-size: 13px; font-weight: 500;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        opacity: 0; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        pointer-events: none; z-index: 2147483647;
+        display: flex; align-items: center; gap: 10px;
     }
-    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    .ios-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
     /* Loading Overlay */
-    #loader {
-        position: absolute; inset: 0; background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(5px);
+    #iosLoader {
+        position: absolute; inset: 0; background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(8px);
         display: none; flex-direction: column; align-items: center; justify-content: center;
-        z-index: 10; opacity: 0; transition: opacity 0.3s;
+        z-index: 10; border-radius: 24px; opacity: 0; transition: opacity 0.3s;
     }
     .spinner {
-        width: 36px; height: 36px; border: 3px solid rgba(0, 122, 255, 0.2);
-        border-top-color: #007AFF; border-radius: 50%; animation: spin 1s linear infinite;
+        width: 36px; height: 36px;
+        border: 3px solid rgba(0, 122, 255, 0.2); border-top-color: #007AFF;
+        border-radius: 50%; animation: spin 1s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     `;
 
+    // Inject CSS ke dalam Shadow DOM
     const style = document.createElement("style");
     style.textContent = css;
     shadow.appendChild(style);
 
+    // Create UI dengan SVG Vektor murni
     const ui = document.createElement("div");
     ui.id = "iosGlassCard";
     ui.innerHTML = `
-        <div id="loader">
+        <div id="iosLoader">
             <div class="spinner"></div>
-            <div style="margin-top: 10px; font-weight: 600; color: #007AFF;">Executing...</div>
+            <div style="margin-top: 12px; font-weight: 600; color: #007AFF; font-size: 14px;">Executing...</div>
         </div>
         <div id="iosTopBar">
-            <div class="icon-app">
-                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
-            </div>
-            <div class="title-box">
-                <h3>Glass Studio</h3>
-                <p>Code Injector</p>
+            <div class="ios-header-info">
+                <div class="ios-icon-box">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="16 18 22 12 16 6"></polyline>
+                        <polyline points="8 6 2 12 8 18"></polyline>
+                    </svg>
+                </div>
+                <div class="ios-titles">
+                    <h3>Code Injector</h3>
+                    <p>Floating Studio</p>
+                </div>
             </div>
         </div>
         <div id="iosContent">
-            <textarea id="iosEditor" spellcheck="false" placeholder="<!-- Ketik HTML, CSS, JS disini... -->"></textarea>
+            <textarea id="iosEditor" spellcheck="false" placeholder="<!-- Paste HTML, CSS, JS here... -->"></textarea>
             <div class="ios-actions">
+                <button class="ios-btn btn-close" id="btn-close" title="Close">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+                <button class="ios-btn btn-restore" id="btn-restore" title="Restore">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                        <polyline points="3 3 3 8 8 8"></polyline>
+                    </svg>
+                </button>
                 <button class="ios-btn btn-exec" id="btn-exec">
-                    <svg fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> Run
-                </button>
-                <button class="ios-btn btn-restore" id="btn-restore">
-                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><polyline points="3 3 3 8 8 8"/></svg> Restore
-                </button>
-                <button class="ios-btn btn-close" id="btn-close" aria-label="Close">
-                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    <svg fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M5 3v18l15-9L5 3z"></path>
+                    </svg>
+                    Run
                 </button>
             </div>
         </div>
     `;
     shadow.appendChild(ui);
 
+    // Ambil Elemen dari Shadow DOM
     const editor = shadow.getElementById("iosEditor");
     const card = shadow.getElementById("iosGlassCard");
     const topBar = shadow.getElementById("iosTopBar");
-    const loader = shadow.getElementById("loader");
+    const loader = shadow.getElementById("iosLoader");
     let isInjected = false;
 
+    // Load Data
     editor.value = localStorage.getItem(DRAFT) || "";
     editor.addEventListener("input", () => localStorage.setItem(DRAFT, editor.value));
 
-    function showToast(msg) {
+    // Toast Notification dengan Vektor SVG
+    function showToast(msg, type = "info") {
+        const icons = {
+            info: '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>',
+            success: '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>',
+            error: '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>'
+        };
+
         const t = document.createElement("div");
-        t.className = "toast";
-        t.innerHTML = `<span>${msg}</span>`;
+        t.className = "ios-toast";
+        t.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">${icons[type]}</svg> <span>${msg}</span>`;
+        
         shadow.appendChild(t);
         requestAnimationFrame(() => t.classList.add("show"));
-        setTimeout(() => { t.classList.remove("show"); setTimeout(() => t.remove(), 300); }, 2000);
+        setTimeout(() => {
+            t.classList.remove("show");
+            setTimeout(() => t.remove(), 400);
+        }, 2000);
     }
 
-    // --- LOGIKA DRAG (Touch Android & Mouse) ---
+    // --- LOGIKA DRAG (Dioptimalkan untuk Touch Android) ---
     let isDragging = false, startX, startY, initialX = 0, initialY = 0;
     
     const dragStart = (e) => {
@@ -247,10 +253,14 @@ javascript:(function() {
         const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
         initialX = clientX - startX;
         initialY = clientY - startY;
-        card.style.transform = `translate(${initialX}px, ${initialY}px)`;
+        card.style.transform = `translate(${initialX}px, ${initialY}px) scale(1)`;
     };
 
-    const dragEnd = () => { isDragging = false; };
+    const dragEnd = () => {
+        if (isDragging) {
+            isDragging = false;
+        }
+    };
 
     topBar.addEventListener('touchstart', dragStart, { passive: false });
     window.addEventListener('touchmove', dragMove, { passive: false });
@@ -259,16 +269,19 @@ javascript:(function() {
     window.addEventListener('mousemove', dragMove, { passive: false });
     window.addEventListener('mouseup', dragEnd);
 
-    // --- AKSI TOMBOL ---
+    // --- TOMBOL AKSI ---
+
+    // Close Button (Tutup Popup)
     shadow.getElementById("btn-close").onclick = () => {
-        card.style.animation = "popupClose 0.2s forwards";
-        setTimeout(() => host.remove(), 250);
-        if(isInjected) showToast("Disembunyikan. HTML masih berjalan.");
+        card.style.animation = "popupHide 0.3s forwards";
+        setTimeout(() => host.remove(), 350);
+        if(isInjected) showToast("Studio closed. Script is running.", "info");
     };
 
+    // Execute Button (Inject ke Fullscreen iFrame)
     shadow.getElementById("btn-exec").onclick = () => {
         const htmlCode = editor.value.trim();
-        if (!htmlCode) return showToast("⚠️ Code masih kosong!");
+        if (!htmlCode) return showToast("Code is empty!", "error");
 
         loader.style.display = "flex";
         requestAnimationFrame(() => loader.style.opacity = "1");
@@ -277,6 +290,7 @@ javascript:(function() {
             const oldFrame = document.getElementById("glassStudioFrame");
             if(oldFrame) oldFrame.remove();
 
+            // Sembunyikan web asli (kecuali shadow host popup ini)
             Array.from(document.body.children).forEach(child => {
                 if(child.id !== "iosGlassHost" && child.tagName !== "STYLE" && child.tagName !== "SCRIPT") {
                     if(!child.hasAttribute('data-display-origin')) {
@@ -286,6 +300,7 @@ javascript:(function() {
                 }
             });
 
+            // Buat Frame Injeksi
             const iframe = document.createElement("iframe");
             iframe.id = "glassStudioFrame";
             iframe.style.cssText = "position:fixed; inset:0; width:100vw; height:100vh; border:none; z-index:2147483646; background:#fff;";
@@ -298,12 +313,17 @@ javascript:(function() {
             isInjected = true;
             loader.style.opacity = "0";
             setTimeout(() => loader.style.display = "none", 300);
+            
+            showToast("Injection Successful!", "success");
+            // Sembunyikan otomatis window editor setelah berhasil
             shadow.getElementById("btn-close").click();
-        }, 600);
+
+        }, 800);
     };
 
+    // Restore Button (Hapus Frame, Munculkan Web Asli)
     shadow.getElementById("btn-restore").onclick = () => {
-        if (!isInjected) return showToast("Tidak ada yang perlu direstore.");
+        if (!isInjected) return showToast("Nothing to restore.", "info");
         
         const iframe = document.getElementById("glassStudioFrame");
         if(iframe) iframe.remove();
@@ -315,11 +335,8 @@ javascript:(function() {
         });
 
         isInjected = false;
-        showToast("✅ Halaman Asli Kembali");
+        showToast("Page Restored", "success");
     };
 
-    showToast("✨ Glass Studio Siap");
+    showToast("Studio Ready", "info");
 })();
-
-
-```
