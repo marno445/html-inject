@@ -186,12 +186,6 @@ javascript:(function() {
                         <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
                 </button>
-                <button class="ios-btn btn-restore" id="btn-restore" title="Restore">
-                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-                        <polyline points="3 3 3 8 8 8"></polyline>
-                    </svg>
-                </button>
                 <button class="ios-btn btn-exec" id="btn-exec">
                     <svg fill="currentColor" viewBox="0 0 24 24">
                         <path d="M5 3v18l15-9L5 3z"></path>
