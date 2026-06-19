@@ -1,238 +1,256 @@
-
 javascript:(function() {
-    // Mencegah duplikasi UI
-    if (document.getElementById("iosGlassStudio")) return;
+    // Mencegah duplikasi jika sudah ditekan sebelumnya
+    if (document.getElementById("iosGlassHost")) return;
 
     const DRAFT = "IOS_GLASS_DRAFT_HTML";
 
-    // CSS bergaya iOS / Apple Glassmorphism (Dioptimalkan untuk Mobile/Android)
-    const css = `
-    @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600;700&display=swap');
+    // Membuat Shadow DOM Host agar CSS tidak tercampur dengan CSS website
+    const host = document.createElement("div");
+    host.id = "iosGlassHost";
+    // Wrapper dibuat transparan dan tidak mengganggu klik website di luarnya
+    host.style.cssText = "position: fixed; inset: 0; z-index: 2147483647; pointer-events: none;";
+    document.body.appendChild(host);
 
-    #iosGlassStudio {
-        position: fixed;
-        inset: 0;
-        z-index: 2147483647;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(0, 0, 0, 0.2);
-        backdrop-filter: blur(5px);
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        opacity: 0;
-        animation: iosFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        pointer-events: none;
+    // Mengaktifkan Shadow Root
+    const shadow = host.attachShadow({ mode: "open" });
+
+    // CSS Tema Terang, Professional, & Menonjol
+    const css = `
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+    :host {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
     #iosGlassCard {
-        position: relative;
-        width: min(92vw, 720px);
-        height: min(88vh, 650px);
-        border-radius: 32px;
-        background: rgba(30, 30, 30, 0.65);
-        backdrop-filter: blur(40px) saturate(200%);
-        -webkit-backdrop-filter: blur(40px) saturate(200%);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        box-shadow: 0 30px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+        position: absolute;
+        top: 8vh;
+        left: 5vw;
+        width: 90vw;
+        height: 75vh;
+        max-width: 600px;
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(25px);
+        -webkit-backdrop-filter: blur(25px);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), inset 0 0 0 1px rgba(255, 255, 255, 0.6);
         display: flex;
         flex-direction: column;
-        color: #fff;
-        transform: scale(0.9) translateY(20px);
-        animation: iosSpringUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        pointer-events: auto;
+        color: #1C1C1E;
+        pointer-events: auto; /* Agar card bisa diklik */
         overflow: hidden;
+        opacity: 0;
+        transform: scale(0.95);
+        animation: popupSpring 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
-    #iosGlassCard::before {
-        content: "";
-        position: absolute;
-        top: 0; left: 0; right: 0; height: 100%;
-        background: radial-gradient(circle at top left, rgba(255,255,255,0.15), transparent 50%);
-        pointer-events: none;
-        z-index: 0;
+    @keyframes popupSpring { 
+        to { opacity: 1; transform: scale(1) translate(0, 0); } 
     }
-
-    @keyframes iosFadeIn { to { opacity: 1; } }
-    @keyframes iosSpringUp { to { transform: scale(1) translateY(0); } }
-    @keyframes iosFadeOut { to { opacity: 0; transform: scale(0.95); } }
+    @keyframes popupHide { 
+        to { opacity: 0; transform: scale(0.95); } 
+    }
 
     #iosTopBar {
         padding: 16px 20px;
         display: flex;
         justify-content: space-between;
         align-items: center;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        background: rgba(255, 255, 255, 0.5);
         cursor: grab;
-        border-bottom: 1px solid rgba(255,255,255,0.08);
-        z-index: 1;
-        touch-action: none; /* Mencegah layar ikut scroll saat elemen digeser di Android */
+        touch-action: none; /* Cegah scroll saat di-drag di Android */
     }
     #iosTopBar:active { cursor: grabbing; }
 
-    .ios-header-info { display: flex; align-items: center; gap: 14px; }
+    .ios-header-info { display: flex; align-items: center; gap: 14px; pointer-events: none; }
     
     .ios-icon-box {
-        width: 44px; height: 44px;
-        background: linear-gradient(135deg, #0A84FF, #5E5CE6);
-        border-radius: 14px;
+        width: 42px; height: 42px;
+        background: #F2F2F7;
+        border-radius: 12px;
         display: flex; justify-content: center; align-items: center;
-        box-shadow: 0 8px 20px rgba(10, 132, 255, 0.4);
-        border: 1px solid rgba(255,255,255,0.2);
+        color: #007AFF;
+        border: 1px solid rgba(0, 0, 0, 0.05);
     }
-    .ios-icon-box svg { width: 22px; height: 22px; fill: white; }
+    .ios-icon-box svg { width: 22px; height: 22px; }
 
-    .ios-titles h3 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: 0.3px; }
-    .ios-titles p { margin: 2px 0 0; font-size: 12px; color: rgba(255,255,255,0.6); }
+    .ios-titles h3 { margin: 0; font-size: 16px; font-weight: 600; color: #000; letter-spacing: -0.3px; }
+    .ios-titles p { margin: 2px 0 0; font-size: 12px; color: #6E6E73; }
 
     #iosContent {
         padding: 16px 20px;
-        display: flex; flex-direction: column; gap: 14px; flex: 1; z-index: 1;
+        display: flex; flex-direction: column; gap: 16px; flex: 1;
     }
 
     #iosEditor {
         flex: 1;
-        background: rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 20px;
+        background: rgba(0, 0, 0, 0.03);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 16px;
         padding: 16px;
-        color: #A9DC76;
+        color: #1C1C1E;
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-        font-size: 14px;
+        font-size: 13px;
         line-height: 1.5;
         resize: none;
         outline: none;
-        box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);
-        transition: border 0.3s;
+        transition: all 0.2s;
         -webkit-overflow-scrolling: touch;
     }
-    #iosEditor:focus { border-color: #0A84FF; }
-    #iosEditor::placeholder { color: rgba(255,255,255,0.3); }
+    #iosEditor:focus { 
+        border-color: #007AFF; 
+        background: #FFFFFF;
+        box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.15);
+    }
+    #iosEditor::placeholder { color: #A1A1A6; }
 
     .ios-actions { display: flex; gap: 10px; }
 
     .ios-btn {
-        flex: 1; height: 48px;
+        height: 48px;
         border: none; border-radius: 14px;
-        font-size: 14px; font-weight: 600; letter-spacing: 0.3px;
+        font-size: 14px; font-weight: 600;
         cursor: pointer;
-        display: flex; justify-content: center; align-items: center; gap: 6px;
-        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-        backdrop-filter: blur(10px);
+        display: flex; justify-content: center; align-items: center; gap: 8px;
+        transition: transform 0.1s, filter 0.2s;
     }
-    .ios-btn:active { transform: scale(0.96); }
+    .ios-btn:active { transform: scale(0.94); }
     .ios-btn svg { width: 18px; height: 18px; }
 
-    .btn-exec { background: #0A84FF; color: white; box-shadow: 0 4px 15px rgba(10,132,255,0.3); }
-    .btn-restore { background: rgba(255, 69, 58, 0.15); color: #FF453A; border: 1px solid rgba(255, 69, 58, 0.3); }
-    .btn-close { background: rgba(255, 255, 255, 0.1); color: white; }
+    /* Desain Tombol Menonjol */
+    .btn-exec { flex: 2; background: #007AFF; color: white; box-shadow: 0 6px 16px rgba(0, 122, 255, 0.3); }
+    .btn-restore { flex: 1; background: #FF3B30; color: white; box-shadow: 0 6px 16px rgba(255, 59, 48, 0.3); }
+    .btn-close { flex: 1; background: #E5E5EA; color: #1C1C1E; }
 
-    /* Toast Notification Apple Style */
+    /* Toast Notification Professional */
     .ios-toast {
-        position: fixed; top: 40px; left: 50%; transform: translateX(-50%) translateY(-20px);
-        background: rgba(30, 30, 30, 0.85); backdrop-filter: blur(20px);
+        position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%) translateY(20px);
+        background: rgba(30, 30, 30, 0.9); backdrop-filter: blur(15px);
         color: white; padding: 12px 24px; border-radius: 30px;
-        font-size: 14px; font-weight: 500;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
-        opacity: 0; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        z-index: 2147483647; pointer-events: none;
+        font-size: 13px; font-weight: 500;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        opacity: 0; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        pointer-events: none; z-index: 2147483647;
+        display: flex; align-items: center; gap: 10px;
     }
     .ios-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
     /* Loading Overlay */
     #iosLoader {
-        position: absolute; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(10px);
+        position: absolute; inset: 0; background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(8px);
         display: none; flex-direction: column; align-items: center; justify-content: center;
-        z-index: 10; border-radius: 32px; opacity: 0; transition: opacity 0.3s;
+        z-index: 10; border-radius: 24px; opacity: 0; transition: opacity 0.3s;
     }
     .spinner {
-        width: 40px; height: 40px;
-        border: 4px solid rgba(255,255,255,0.2); border-top-color: #0A84FF;
-        border-radius: 50%; animation: spin 1s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+        width: 36px; height: 36px;
+        border: 3px solid rgba(0, 122, 255, 0.2); border-top-color: #007AFF;
+        border-radius: 50%; animation: spin 1s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     `;
 
-    // Inject CSS
+    // Inject CSS ke dalam Shadow DOM
     const style = document.createElement("style");
     style.textContent = css;
-    document.head.appendChild(style);
+    shadow.appendChild(style);
 
-    // Create UI
+    // Create UI dengan SVG Vektor murni
     const ui = document.createElement("div");
-    ui.id = "iosGlassStudio";
+    ui.id = "iosGlassCard";
     ui.innerHTML = `
-        <div id="iosGlassCard">
-            <div id="iosLoader">
-                <div class="spinner"></div>
-                <div style="margin-top: 16px; font-weight: 500; letter-spacing: 1px;">Injecting...</div>
-            </div>
-            <div id="iosTopBar">
-                <div class="ios-header-info">
-                    <div class="ios-icon-box">
-                        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    </div>
-                    <div class="ios-titles">
-                        <h3>Glass Injector</h3>
-                        <p>Android Dev Environment</p>
-                    </div>
+        <div id="iosLoader">
+            <div class="spinner"></div>
+            <div style="margin-top: 12px; font-weight: 600; color: #007AFF; font-size: 14px;">Executing...</div>
+        </div>
+        <div id="iosTopBar">
+            <div class="ios-header-info">
+                <div class="ios-icon-box">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="16 18 22 12 16 6"></polyline>
+                        <polyline points="8 6 2 12 8 18"></polyline>
+                    </svg>
                 </div>
-            </div>
-            <div id="iosContent">
-                <textarea id="iosEditor" spellcheck="false" placeholder="<!-- Paste your HTML, CSS, JS here... -->"></textarea>
-                <div class="ios-actions">
-                    <button class="ios-btn btn-close" id="btn-close">Close</button>
-                    <button class="ios-btn btn-restore" id="btn-restore">Restore</button>
-                    <button class="ios-btn btn-exec" id="btn-exec">Execute</button>
+                <div class="ios-titles">
+                    <h3>Code Injector</h3>
+                    <p>Floating Studio</p>
                 </div>
             </div>
         </div>
+        <div id="iosContent">
+            <textarea id="iosEditor" spellcheck="false" placeholder="<!-- Paste HTML, CSS, JS here... -->"></textarea>
+            <div class="ios-actions">
+                <button class="ios-btn btn-close" id="btn-close" title="Close">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+                <button class="ios-btn btn-restore" id="btn-restore" title="Restore">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                        <polyline points="3 3 3 8 8 8"></polyline>
+                    </svg>
+                </button>
+                <button class="ios-btn btn-exec" id="btn-exec">
+                    <svg fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M5 3v18l15-9L5 3z"></path>
+                    </svg>
+                    Run
+                </button>
+            </div>
+        </div>
     `;
-    document.body.appendChild(ui);
+    shadow.appendChild(ui);
 
-    // State & Elements
-    const editor = document.getElementById("iosEditor");
-    const card = document.getElementById("iosGlassCard");
-    const topBar = document.getElementById("iosTopBar");
-    const loader = document.getElementById("iosLoader");
+    // Ambil Elemen dari Shadow DOM
+    const editor = shadow.getElementById("iosEditor");
+    const card = shadow.getElementById("iosGlassCard");
+    const topBar = shadow.getElementById("iosTopBar");
+    const loader = shadow.getElementById("iosLoader");
     let isInjected = false;
 
-    // Load Draft
+    // Load Data
     editor.value = localStorage.getItem(DRAFT) || "";
     editor.addEventListener("input", () => localStorage.setItem(DRAFT, editor.value));
 
-    // Toast Notification Function
-    function showToast(msg) {
+    // Toast Notification dengan Vektor SVG
+    function showToast(msg, type = "info") {
+        const icons = {
+            info: '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>',
+            success: '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>',
+            error: '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>'
+        };
+
         const t = document.createElement("div");
         t.className = "ios-toast";
-        t.textContent = msg;
-        document.body.appendChild(t);
+        t.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">${icons[type]}</svg> <span>${msg}</span>`;
+        
+        shadow.appendChild(t);
         requestAnimationFrame(() => t.classList.add("show"));
         setTimeout(() => {
             t.classList.remove("show");
             setTimeout(() => t.remove(), 400);
-        }, 2500);
+        }, 2000);
     }
 
-    // --- TOUCH & MOUSE DRAGGING LOGIC (Optimized for Android) ---
+    // --- LOGIKA DRAG (Dioptimalkan untuk Touch Android) ---
     let isDragging = false, startX, startY, initialX = 0, initialY = 0;
     
     const dragStart = (e) => {
         isDragging = true;
-        // Deteksi apakah input dari touch (jari) atau mouse
         const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
         const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
-        
         startX = clientX - initialX;
         startY = clientY - initialY;
-        card.style.transition = 'none'; // Matikan animasi saat jari menggeser
+        card.style.transition = 'none';
     };
 
     const dragMove = (e) => {
         if (!isDragging) return;
-        e.preventDefault(); // Mencegah layar ikut ke-scroll saat mendrag
-        
+        e.preventDefault();
         const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
         const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
-        
         initialX = clientX - startX;
         initialY = clientY - startY;
         card.style.transform = `translate(${initialX}px, ${initialY}px) scale(1)`;
@@ -241,56 +259,50 @@ javascript:(function() {
     const dragEnd = () => {
         if (isDragging) {
             isDragging = false;
-            card.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)'; // Kembalikan efek spring Apple
         }
     };
 
-    // Event Listener untuk Mouse
+    topBar.addEventListener('touchstart', dragStart, { passive: false });
+    window.addEventListener('touchmove', dragMove, { passive: false });
+    window.addEventListener('touchend', dragEnd);
     topBar.addEventListener('mousedown', dragStart);
     window.addEventListener('mousemove', dragMove, { passive: false });
     window.addEventListener('mouseup', dragEnd);
 
-    // Event Listener untuk Layar Sentuh Android (Touch)
-    topBar.addEventListener('touchstart', dragStart, { passive: false });
-    window.addEventListener('touchmove', dragMove, { passive: false });
-    window.addEventListener('touchend', dragEnd);
+    // --- TOMBOL AKSI ---
 
-
-    // --- TOMBOL LOGIC ---
-
-    // Close Button (Hanya menyembunyikan UI, HTML yang diinject tetap berjalan)
-    document.getElementById("btn-close").onclick = () => {
-        card.style.animation = "iosFadeOut 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards";
-        ui.style.animation = "iosFadeOut 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards";
-        setTimeout(() => ui.style.display = "none", 400);
-        if(isInjected) showToast("Studio hidden. HTML is still running.");
+    // Close Button (Tutup Popup)
+    shadow.getElementById("btn-close").onclick = () => {
+        card.style.animation = "popupHide 0.3s forwards";
+        setTimeout(() => host.remove(), 350);
+        if(isInjected) showToast("Studio closed. Script is running.", "info");
     };
 
-    // Execute Logic (Menggunakan Fullscreen iFrame agar web asli tetap aman di background)
-    document.getElementById("btn-exec").onclick = () => {
+    // Execute Button (Inject ke Fullscreen iFrame)
+    shadow.getElementById("btn-exec").onclick = () => {
         const htmlCode = editor.value.trim();
-        if (!htmlCode) return showToast("⚠️ Code is empty!");
+        if (!htmlCode) return showToast("Code is empty!", "error");
 
         loader.style.display = "flex";
         requestAnimationFrame(() => loader.style.opacity = "1");
 
         setTimeout(() => {
-            const oldFrame = document.getElementById("injectedGlassFrame");
+            const oldFrame = document.getElementById("glassStudioFrame");
             if(oldFrame) oldFrame.remove();
 
-            // Sembunyikan isi web asli
+            // Sembunyikan web asli (kecuali shadow host popup ini)
             Array.from(document.body.children).forEach(child => {
-                if(child.id !== "iosGlassStudio" && child.tagName !== "STYLE" && child.tagName !== "SCRIPT") {
-                    if(!child.hasAttribute('data-original-display')) {
-                        child.setAttribute('data-original-display', getComputedStyle(child).display);
+                if(child.id !== "iosGlassHost" && child.tagName !== "STYLE" && child.tagName !== "SCRIPT") {
+                    if(!child.hasAttribute('data-display-origin')) {
+                        child.setAttribute('data-display-origin', getComputedStyle(child).display);
                     }
                     child.style.display = "none";
                 }
             });
 
-            // Buat iFrame layar penuh untuk inject
+            // Buat Frame Injeksi
             const iframe = document.createElement("iframe");
-            iframe.id = "injectedGlassFrame";
+            iframe.id = "glassStudioFrame";
             iframe.style.cssText = "position:fixed; inset:0; width:100vw; height:100vh; border:none; z-index:2147483646; background:#fff;";
             document.body.appendChild(iframe);
 
@@ -302,31 +314,29 @@ javascript:(function() {
             loader.style.opacity = "0";
             setTimeout(() => loader.style.display = "none", 300);
             
-            // Otomatis sembunyikan kotak script
-            document.getElementById("btn-close").click();
-            showToast("🚀 Injection Successful!");
+            showToast("Injection Successful!", "success");
+            // Sembunyikan otomatis window editor setelah berhasil
+            shadow.getElementById("btn-close").click();
 
         }, 800);
     };
 
-    // Restore Logic (Menghapus iFrame dan mengembalikan web asli)
-    document.getElementById("btn-restore").onclick = () => {
-        if (!isInjected) return showToast("Nothing to restore.");
+    // Restore Button (Hapus Frame, Munculkan Web Asli)
+    shadow.getElementById("btn-restore").onclick = () => {
+        if (!isInjected) return showToast("Nothing to restore.", "info");
         
-        const iframe = document.getElementById("injectedGlassFrame");
+        const iframe = document.getElementById("glassStudioFrame");
         if(iframe) iframe.remove();
 
-        // Munculkan kembali isi web asli
         Array.from(document.body.children).forEach(child => {
-            if(child.hasAttribute('data-original-display')) {
-                child.style.display = child.getAttribute('data-original-display');
+            if(child.hasAttribute('data-display-origin')) {
+                child.style.display = child.getAttribute('data-display-origin');
             }
         });
 
         isInjected = false;
-        showToast("♻️ Page Restored");
+        showToast("Page Restored", "success");
     };
 
-    showToast("Glass Studio Ready ✨");
+    showToast("Studio Ready", "info");
 })();
-
